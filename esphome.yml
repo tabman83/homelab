@@ -5,15 +5,19 @@ metadata:
 spec:
   hostNetwork: true
   volumes:
-    - name: config
-      nfs:
-        server: nas.local
-        path: /data/k3s-volumes/esphome/
+  - name: config
+    nfs:
+      server: nas.local
+      path: /data/k3s-volumes/esphome/
+  - name: cache
+    emptyDir: {}
   containers:
-    - name: esphome
-      image: esphome/esphome
-      securityContext:
-        privileged: true
-      volumeMounts:
-        - mountPath: /config
-          name: config
+  - name: esphome
+    image: esphome/esphome
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - mountPath: /cache
+      name: cache
+    - mountPath: /config
+      name: config
