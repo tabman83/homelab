@@ -3,6 +3,7 @@ kind: Pod
 metadata:
   name: esphome
 spec:
+  hostNetwork: true
   volumes:
     - name: config
       nfs:
