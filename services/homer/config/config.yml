@@ -1,0 +1,17 @@
+title: "Homer"
+subtitle: "My Homelab Dashboard"
+logo: "logo.png"
+header: true
+footer: false
+columns: 3
+
+services:
+  - name: "Core"
+    icon: "fas fa-server"
+    items:
+      - name: "Proxmox"
+        url: "https://proxmox.local"
+        target: "_blank"
+      - name: "Home Assistant"
+        url: "http://homeassistant.local:8123"
+        target: "_blank"
