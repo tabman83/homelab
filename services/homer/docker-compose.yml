@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"             # Homer will listen on port 8080 in the LXC
+    volumes:
+      - ./config:/www/assets    # use the config from this git repo directory
