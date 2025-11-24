@@ -2,7 +2,9 @@ name: Test WireGuard Tunnel
 
 on:
   workflow_dispatch:   # manually trigger from GitHub UI
-
+  #push:
+    #branches:
+      #- main 
 jobs:
   test-wireguard:
     runs-on: ubuntu-latest
