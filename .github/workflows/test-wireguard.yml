@@ -26,12 +26,6 @@ jobs:
           sudo ip link set up dev wg0
           sudo ip route add 192.168.5.0/24 dev wg0
 
-      # Test the connection
-      - name: Ping Proxmox
-        run: |
-          echo "Pinging Proxmox..."
-          ping -c 4 192.168.5.3   # <-- CHANGE TO YOUR PROXMOX IP
-
       - name: Ensure all referenced LXC templates exist on Proxmox
         env:
           PROXMOX_SSH_KEY: ${{ secrets.PROXMOX_SSH_KEY }}
@@ -99,6 +93,14 @@ jobs:
           PM_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
           PM_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
         run: terraform plan
+
+      - name: Terraform Apply (master only)
+        if: github.ref == 'refs/heads/master'
+        env:
+          PM_API_URL:          ${{ secrets.PROXMOX_API_URL }}
+          PM_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          PM_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+        run: terraform apply -auto-approve
 
       # Bring down the tunnel
       - name: Bring down WireGuard
