@@ -1,0 +1,42 @@
+name: Test WireGuard Tunnel
+
+on:
+  workflow_dispatch:   # manually trigger from GitHub UI
+
+jobs:
+  test-wireguard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install WireGuard
+      - name: Install WireGuard
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wireguard
+
+      # Write the WireGuard config from secret
+      - name: Write WireGuard config
+        run: |
+          echo "${{ secrets.WG_CONFIG }}" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+          sudo chmod 600 /etc/wireguard/wg0.conf
+
+      # Bring up the tunnel
+      - name: Bring up WireGuard
+        run: |
+          sudo wg-quick up wg0
+          sudo wg
+
+      # Test the connection
+      - name: Ping Proxmox
+        run: |
+          echo "Pinging Proxmox..."
+          ping -c 4 192.168.5.3   # <-- CHANGE TO YOUR PROXMOX IP
+
+      # Bring down the tunnel
+      - name: Bring down WireGuard
+        if: always()
+        run: |
+          sudo wg-quick down wg0
