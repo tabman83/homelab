@@ -30,21 +30,73 @@ jobs:
           echo "Pinging Proxmox..."
           ping -c 4 192.168.5.3   # <-- CHANGE TO YOUR PROXMOX IP
 
+      - name: Ensure all referenced LXC templates exist on Proxmox
+        env:
+          PROXMOX_SSH_KEY: ${{ secrets.PROXMOX_SSH_KEY }}
+        run: |
+          # 1) Find all ostemplate values in root .tf files (ignore modules/)
+          templates=$(grep -hro 'ostemplate *= *"[^"]*"' . --exclude-dir=modules --include='*.tf' \
+            | sed -E 's/.*"([^"]*)".*/\1/' \
+            | sort -u)
+
+          if [ -z "$templates" ]; then
+            echo "No ostemplate entries found in root .tf files. Skipping template ensure."
+            exit 0
+          fi
+
+          echo "Found ostemplates:"
+          echo "$templates"
+
+          # 2) Write SSH key
+          mkdir -p ~/.ssh
+          echo "$PROXMOX_SSH_KEY" > ~/.ssh/id_proxmox_ci
+          chmod 600 ~/.ssh/id_proxmox_ci
+
+          # 3) SSH to Proxmox over WireGuard and ensure each template exists
+          ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@192.168.5.3 bash <<'EOF'
+          set -e
+
+          echo "Updating Proxmox template list (pveam update)..."
+          pveam update
+
+          # templates variable will be expanded by the outer shell
+          for tpl in '"$templates"'; do
+            [ -z "$tpl" ] && continue
+
+            storage="${tpl%%:*}"      # e.g. 'local' from 'local:vztmpl/debian-12...'
+            path="${tpl#*:}"          # e.g. 'vztmpl/debian-12...'
+            filename="$(basename "$path")"
+
+            echo
+            echo "Checking template: \$tpl"
+            echo "  storage = \$storage"
+            echo "  path    = \$path"
+            echo "  file    = \$filename"
+
+            # Check if full ID (storage:path) appears in pveam list
+            if ! pveam list "\$storage" | awk '{print $1}' | grep -qx "\$tpl"; then
+              echo "  -> Missing, downloading via: pveam download \$storage \$filename"
+              pveam download "\$storage" "\$filename"
+            else
+              echo "  -> Already present."
+            fi
+          done
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         env:
-          PROXMOX_API_URL:          ${{ secrets.PROXMOX_API_URL }}
-          PROXMOX_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
-          PROXMOX_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          PM_API_URL:          ${{ secrets.PROXMOX_API_URL }}
+          PM_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          PM_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
         run: terraform init
 
       - name: Terraform Plan
         env:
-          PROXMOX_API_URL:          ${{ secrets.PROXMOX_API_URL }}
-          PROXMOX_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
-          PROXMOX_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          PM_API_URL:          ${{ secrets.PROXMOX_API_URL }}
+          PM_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          PM_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
         run: terraform plan
 
       # Bring down the tunnel
