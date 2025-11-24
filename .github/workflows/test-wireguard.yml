@@ -19,9 +19,16 @@ jobs:
 
       # Write the WireGuard config from secret
       - name: Write WireGuard config
+        env:
+          WG_CONFIG: ${{ secrets.WG_CONFIG }}
         run: |
-          echo "${{ secrets.WG_CONFIG }}" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+          printf '%s\n' "$WG_CONFIG" | sed 's/\r$//' | sudo tee /etc/wireguard/wg0.conf > /dev/null
           sudo chmod 600 /etc/wireguard/wg0.conf
+      
+          # Optional: show masked structure to verify it isn't mangled
+          echo "Config structure (masked):"
+          sudo head -n 20 /etc/wireguard/wg0.conf | sed 's/./*/g'
+    
 
       # Bring up the tunnel
       - name: Bring up WireGuard
