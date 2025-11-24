@@ -52,34 +52,33 @@ jobs:
           echo "$PROXMOX_SSH_KEY" > ~/.ssh/id_proxmox_ci
           chmod 600 ~/.ssh/id_proxmox_ci
 
-          # 3) SSH to Proxmox over WireGuard and ensure each template exists
-          ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@192.168.5.3 bash <<'EOF'
-          set -e
-
+          # 3) Run pveam update once
           echo "Updating Proxmox template list (pveam update)..."
-          pveam update
+          ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@192.168.5.3 "pveam update"
 
-          # templates variable will be expanded by the outer shell
-          for tpl in '"$templates"'; do
+          # 4) Loop over each template and ensure it exists
+          for tpl in $templates; do
             [ -z "$tpl" ] && continue
 
             storage="${tpl%%:*}"      # e.g. 'local' from 'local:vztmpl/debian-12...'
             path="${tpl#*:}"          # e.g. 'vztmpl/debian-12...'
-            filename="$(basename "$path")"
+            filename="${path##*/}"    # e.g. 'debian-12-standard_12.0-1_amd64.tar.zst'
 
             echo
-            echo "Checking template: \$tpl"
-            echo "  storage = \$storage"
-            echo "  path    = \$path"
-            echo "  file    = \$filename"
+            echo "Checking template: $tpl"
+            echo "  storage = $storage"
+            echo "  path    = $path"
+            echo "  file    = $filename"
 
-            # Check if full ID (storage:path) appears in pveam list
-            if ! pveam list "\$storage" | awk '{print $1}' | grep -qx "\$tpl"; then
-              echo "  -> Missing, downloading via: pveam download \$storage \$filename"
-              pveam download "\$storage" "\$filename"
-            else
-              echo "  -> Already present."
-            fi
+            ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@192.168.5.3 "
+              set -e
+              if ! pveam list $storage | awk '{print \$1}' | grep -qx '$tpl'; then
+                echo '  -> Missing, downloading via: pveam download $storage $filename'
+                pveam download $storage '$filename'
+              else
+                echo '  -> Already present.'
+              fi
+            "
           done
 
       - name: Set up Terraform
