@@ -22,15 +22,6 @@ jobs:
 
       - run: sudo ip route add 192.168.5.0/24 dev wg0
 
-      - name: Show WireGuard status
-        run: |
-          echo "===== wg show ====="
-          sudo wg show
-          echo "===== ip addr show wg0 ====="
-          ip addr show dev wg0
-          echo "===== ip route ====="
-          ip route
-
       # Test the connection
       - name: Ping Proxmox
         run: |
