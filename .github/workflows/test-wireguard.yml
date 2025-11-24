@@ -16,9 +16,11 @@ jobs:
 
       - run: sudo ip address add dev wg0 192.168.98.4/32
       
-      - run: sudo wg set wg0 private-key privatekey peer 3BrtD/9daCK8q1PGgs/NoDzsiHuFNQlmkHOulCHOMWs= allowed-ips 0.0.0.0/0 endpoint vpn.parisi.cloud:13231
+      - run: sudo wg set wg0 private-key privatekey peer 3BrtD/9daCK8q1PGgs/NoDzsiHuFNQlmkHOulCHOMWs= allowed-ips 192.168.98.0/24,192.168.5.0/24 endpoint vpn.parisi.cloud:13231
 
       - run: sudo ip link set up dev wg0
+
+      - run: sudo ip route add 192.168.5.0/24 dev wg0
 
       - name: Show WireGuard status
         run: |
