@@ -8,33 +8,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - run: sudo apt install wireguard
 
-      # Install WireGuard
-      - name: Install WireGuard
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wireguard
-
-      # Write the WireGuard config from secret
-      - name: Write WireGuard config
-        env:
-          WG_CONFIG: ${{ secrets.WG_CONFIG }}
-        run: |
-          printf '%s\n' "$WG_CONFIG" | sed 's/\r$//' | sudo tee /etc/wireguard/wg0.conf > /dev/null
-          sudo chmod 600 /etc/wireguard/wg0.conf
+      - run: echo "${{ secrets.WIREGUARD_PRIVATE_KEY }}" > privatekey
+      - run: echo "${{ secrets.WIREGUARD_PUBLIC_KEY }}" > publickey
       
-          # Optional: show masked structure to verify it isn't mangled
-          echo "Config structure (masked):"
-          sudo head -n 20 /etc/wireguard/wg0.conf | sed 's/./*/g'
-    
 
-      # Bring up the tunnel
-      - name: Bring up WireGuard
-        run: |
-          sudo wg-quick up wg0
-          sudo wg
+      - run: sudo ip link add dev wg0 type wireguard
+
+      - run: sudo ip address add dev wg0 192.168.98.4 peer 192.168.98.1
+      
+      - run: sudo wg set wg0 listen-port 48123 private-key privatekey peer publickey allowed-ips 192.168.5.0/32,192.168.98.0/32 endpoint vpn.parisi.cloud:13231
+
+      - run: sudo ip link set up dev wg0
+
+      - run: curl -vvv http://192.168.5.1
 
       # Test the connection
       - name: Ping Proxmox
@@ -45,5 +33,4 @@ jobs:
       # Bring down the tunnel
       - name: Bring down WireGuard
         if: always()
-        run: |
-          sudo wg-quick down wg0
+        run: sudo ip link set down dev wg0
