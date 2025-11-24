@@ -6,7 +6,7 @@ module "homer_lxc" {
 
   # CHANGE these to your actual values:
   node       = "pve"              # e.g. "pve", "pve2", "pve3"
-  ostemplate = "local:vztmpl/debian-12-standard_12.0-1_amd64.tar.zst"  # must exist in Proxmox
+  ostemplate = "local:vztmpl/debian-13-standard_13.1-2_amd64.tar.zst"  # must exist in Proxmox
   storage    = "ceph-rbd"         # e.g. "local-lvm", "ceph-rbd", ...
 
   cpu_cores  = 1
