@@ -8,25 +8,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: sudo apt install wireguard
-
-      - run: echo "${{ secrets.WIREGUARD_PRIVATE_KEY }}" > privatekey
-
-      - run: sudo ip link add dev wg0 type wireguard
-
-      - run: sudo ip address add dev wg0 192.168.98.4/32
+      # Checkout repo so Terraform files are available
+      - name: Checkout
+        uses: actions/checkout@v4
       
-      - run: sudo wg set wg0 private-key privatekey peer 3BrtD/9daCK8q1PGgs/NoDzsiHuFNQlmkHOulCHOMWs= allowed-ips 192.168.98.0/24,192.168.5.0/24 endpoint vpn.parisi.cloud:13231
+      - name: Install WireGuard
+        run: sudo apt install -y wireguard
 
-      - run: sudo ip link set up dev wg0
-
-      - run: sudo ip route add 192.168.5.0/24 dev wg0
+      - name: Bring up WireGuard
+        run: |
+          echo "${{ secrets.WIREGUARD_PRIVATE_KEY }}" > privatekey
+          sudo ip link add dev wg0 type wireguard
+          sudo ip address add dev wg0 192.168.98.4/32      
+          sudo wg set wg0 private-key privatekey peer ${{ secrets.WIREGUARD_PUBLIC_KEY }} allowed-ips 192.168.98.0/24,192.168.5.0/24 endpoint vpn.parisi.cloud:13231
+          sudo ip link set up dev wg0
+          sudo ip route add 192.168.5.0/24 dev wg0
 
       # Test the connection
       - name: Ping Proxmox
         run: |
           echo "Pinging Proxmox..."
           ping -c 4 192.168.5.3   # <-- CHANGE TO YOUR PROXMOX IP
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        env:
+          PROXMOX_API_URL:          ${{ secrets.PROXMOX_API_URL }}
+          PROXMOX_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          PROXMOX_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+        run: terraform init
+
+      - name: Terraform Plan
+        env:
+          PROXMOX_API_URL:          ${{ secrets.PROXMOX_API_URL }}
+          PROXMOX_API_TOKEN_ID:     ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          PROXMOX_API_TOKEN_SECRET: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+        run: terraform plan
 
       # Bring down the tunnel
       - name: Bring down WireGuard
