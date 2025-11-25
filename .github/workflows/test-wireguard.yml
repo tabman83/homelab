@@ -25,6 +25,7 @@ jobs:
           sudo wg set wg0 private-key privatekey peer ${{ secrets.WIREGUARD_PUBLIC_KEY }} allowed-ips 192.168.98.0/24,192.168.5.0/24 endpoint vpn.parisi.cloud:13231
           sudo ip link set up dev wg0
           sudo ip route add 192.168.5.0/24 dev wg0
+          sudo resolvectl dns wg0 192.168.5.1
 
       - name: Ensure all referenced LXC templates exist on Proxmox
         env:
