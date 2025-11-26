@@ -3,8 +3,9 @@ terraform {
 
   required_providers {
     proxmox = {
-      source = "telmate/proxmox"
-      # version = "~> 3.0" # optional pin, you can uncomment later
+      proxmox = {
+      source  = "Telmate/proxmox"
+      version = "2.9.14"  # optional but good to pin since init picked this
     }
   }
 }
