@@ -1,59 +1,67 @@
+// modules/lxc/variables.tf
+
 variable "hostname" {
-  description = "LXC hostname"
-  type        = string
+  type = string
 }
 
 variable "vmid" {
-  description = "Unique VMID for this container"
-  type        = number
+  type = number
 }
 
-variable "node" {
-  description = "Proxmox node name (e.g. pve, pve2)"
-  type        = string
+variable "target_node" {
+  type = string
 }
 
 variable "ostemplate" {
-  description = "LXC template (e.g. local:vztmpl/debian-12-standard_12.0-1_amd64.tar.zst)"
-  type        = string
+  # e.g. "local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst"
+  type = string
 }
 
-variable "storage" {
-  description = "Storage ID for rootfs (e.g. ceph-rbd, local-lvm)"
-  type        = string
+variable "unprivileged" {
+  type    = bool
+  default = true
 }
 
-variable "disk_size" {
-  description = "Root disk size (e.g. 8G)"
-  type        = string
-  default     = "8G"
+variable "onboot" {
+  type    = bool
+  default = true
 }
 
-variable "cpu_cores" {
-  description = "Number of CPU cores"
-  type        = number
-  default     = 1
+variable "cores" {
+  type = number
 }
 
-variable "memory_mb" {
-  description = "RAM in MB"
-  type        = number
-  default     = 512
+variable "memory" {
+  # MB
+  type = number
 }
 
-variable "bridge" {
-  description = "Network bridge name (e.g. vmbr0)"
-  type        = string
+variable "rootfs_storage" {
+  # Proxmox datastore name, e.g. "ceph-rbd", "local-lvm"
+  type = string
 }
 
-variable "ip" {
-  description = "IPv4 address configuration (e.g. dhcp or 192.168.5.50/24)"
-  type        = string
-  default     = "dhcp"
+variable "rootfs_size" {
+  # bpg accepts string/number; string keeps it explicit, e.g. "20"
+  type = string
+}
+
+variable "ip_address" {
+  # With CIDR, e.g. "192.168.5.50/24"
+  type = string
+}
+
+variable "gateway" {
+  type = string
+}
+
+variable "network_bridge" {
+  # e.g. "vmbr0"
+  type = string
 }
 
 variable "tags" {
-  description = "Optional Proxmox tags"
-  type        = list(string)
-  default     = []
+  # bpg expects list(string)
+  type    = list(string)
+  default = []
 }
