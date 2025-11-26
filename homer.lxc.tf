@@ -4,7 +4,7 @@ module "homer_lxc" {
   hostname        = "homer"
   vmid            = 110
   target_node     = "pve"
-  ostemplate      = "local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst"
+  ostemplate      = "local:vztmpl/debian-13-standard_13.1-2_amd64.tar.zst"
   unprivileged    = true
   onboot          = true
   cores           = 2
