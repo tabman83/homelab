@@ -1,19 +1,18 @@
 module "homer_lxc" {
   source = "./modules/lxc"
 
-  hostname   = "homer"
-  vmid       = 101                # pick a free VMID
-
-  # CHANGE these to your actual values:
-  node       = "pve"              # e.g. "pve", "pve2", "pve3"
-  ostemplate = "local:vztmpl/debian-13-standard_13.1-2_amd64.tar.zst"  # must exist in Proxmox
-  storage    = "ceph-rbd"         # e.g. "local-lvm", "ceph-rbd", ...
-
-  cpu_cores  = 1
-  memory_mb  = 512
-
-  bridge     = "vmbr0"            # usually vmbr0, unless you changed it
-  ip         = "dhcp"             # or "192.168.5.X/24" if you want static
-
-  tags       = ["homer", "homelab"]
+  hostname        = "homer"
+  vmid            = 110
+  target_node     = "pve"
+  ostemplate      = "local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst"
+  unprivileged    = true
+  onboot          = true
+  cores           = 2
+  memory          = 1024
+  rootfs_storage  = "ceph-rbd"
+  rootfs_size     = "20"
+  ip_address      = "192.168.5.51/24"
+  gateway         = "192.168.5.1"
+  network_bridge  = "vmbr0"
+  tags            = ["homer", "gitops"]
 }
