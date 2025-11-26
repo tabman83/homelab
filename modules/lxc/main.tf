@@ -10,60 +10,62 @@ terraform {
 }
 
 resource "proxmox_virtual_environment_container" "this" {
-  # Rough equivalent of Telmate's:
-  #   hostname, target_node, vmid, unprivileged, onboot, tags
-
+  # Basic identity / placement
   description   = "${var.hostname} (managed by Terraform)"
   node_name     = var.target_node
   vm_id         = var.vmid
 
+  # LXC flags
   unprivileged  = var.unprivileged
   start_on_boot = var.onboot
   started       = true
 
-  # bpg expects a list of tags
+  # Tags (bpg expects list(string))
   tags = var.tags
 
-  # CPU / cores (Telmate: cores)
+  # CPU / cores
   cpu {
     cores = var.cores
   }
 
-  # Memory in MB (Telmate: memory, swap)
+  # Memory (MB)
   memory {
     dedicated = var.memory
     swap      = 0
   }
 
-  # Root disk (Telmate: rootfs { storage, size })
+  # Root disk (storage + size)
   disk {
     datastore_id = var.rootfs_storage
     size         = var.rootfs_size
   }
 
-  # OS template (Telmate: ostemplate = "local:vztmpl/…")
-  # For Homer you're likely using a Debian/Ubuntu template;
-  # adjust type if needed (e.g. "ubuntu", "alpine", etc.)
+  # OS template (Debian 12 in your case)
   operating_system {
     template_file_id = var.ostemplate
     type             = "debian"
   }
 
-  # Initialization block holds hostname + IP config (instead of Telmate's network/ip/gw)
+  # Cloud-init-style init: hostname + IP + gateway
   initialization {
     hostname = var.hostname
 
     ip_config {
       ipv4 {
-        address = var.ip_address   # e.g. "192.168.5.50/24"
+        address = var.ip_address   # e.g. "192.168.5.51/24"
         gateway = var.gateway      # e.g. "192.168.5.1"
       }
     }
   }
 
-  # Network interface – here we just specify the bridge.
-  # In practice this is equivalent to Telmate's "bridge = vmbr0".
+  # Network – keep it minimal, like in the provider examples :contentReference[oaicite:0]{index=0}
   network_interface {
-    name = var.network_bridge      # e.g. "vmbr0"
+    name = var.network_bridge     # e.g. "vmbr0"
   }
+
+  # If/when you want Docker inside the LXC, uncomment this:
+  #
+  # features {
+  #   nesting = true
+  # }
 }
