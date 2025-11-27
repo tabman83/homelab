@@ -69,3 +69,21 @@ resource "proxmox_virtual_environment_container" "this" {
   #   nesting = true
   # }
 }
+
+resource "proxmox_virtual_environment_haresource" "this" {
+  count = var.ha_enabled ? 1 : 0
+
+  # For containers, resource_id is: ct:<vmid>
+  resource_id = "ct:${var.vmid}"
+  group       = var.ha_group
+
+  state   = "started"
+  comment = "${var.hostname} (HA managed by Terraform)"
+
+  max_relocate = 1
+  max_restart  = 3
+
+  depends_on = [
+    proxmox_virtual_environment_container.this
+  ]
+}
