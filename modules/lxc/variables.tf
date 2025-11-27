@@ -77,3 +77,9 @@ variable "ha_group" {
   type        = string
   default     = ""
 }
+
+variable "enable_docker" {
+  description = "Enable features needed to run Docker inside this LXC"
+  type        = bool
+  default     = false
+}
