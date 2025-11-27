@@ -90,11 +90,11 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -out=plan
 
       - name: Terraform Apply (master only)
         if: github.ref == 'refs/heads/master'
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve plan
 
       # Bring down the tunnel
       - name: Bring down WireGuard
