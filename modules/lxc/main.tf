@@ -63,11 +63,10 @@ resource "proxmox_virtual_environment_container" "this" {
     name = var.network_bridge     # e.g. "vmbr0"
   }
 
-  # If/when you want Docker inside the LXC, uncomment this:
-  #
-  # features {
-  #   nesting = true
-  # }
+  features {
+    nesting = var.enable_docker
+    fuse    = var.enable_docker
+  }
 }
 
 resource "proxmox_virtual_environment_haresource" "this" {
