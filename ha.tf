@@ -6,7 +6,7 @@ resource "proxmox_virtual_environment_hagroup" "homelab" {
   nodes = {
     pve  = 1
     pve1 = 1
-    pve2 = 1
+    pve3 = 1
   }
 
   # If true, Proxmox will NOT automatically fail back to a higher-priority node
