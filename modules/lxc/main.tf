@@ -65,7 +65,6 @@ resource "proxmox_virtual_environment_container" "this" {
 
   features {
     nesting = var.enable_docker
-    fuse    = var.enable_docker
   }
 }
 
