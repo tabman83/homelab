@@ -65,3 +65,15 @@ variable "tags" {
   type    = list(string)
   default = []
 }
+
+variable "ha_enabled" {
+  description = "Whether this LXC should be managed by Proxmox HA"
+  type        = bool
+  default     = false
+}
+
+variable "ha_group" {
+  description = "Name of the Proxmox HA group to use (required if ha_enabled = true)"
+  type        = string
+  default     = ""
+}
