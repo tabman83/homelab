@@ -63,6 +63,10 @@ resource "proxmox_virtual_environment_container" "this" {
     name = var.network_bridge     # e.g. "vmbr0"
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   features {
     nesting = var.enable_docker
   }
