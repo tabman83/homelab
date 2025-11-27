@@ -15,4 +15,6 @@ module "homer_lxc" {
   gateway         = "192.168.5.1"
   network_bridge  = "vmbr0"
   tags            = ["homer", "gitops"]
+  ha_enabled = true
+  ha_group   = proxmox_virtual_environment_hagroup.homelab.group
 }
