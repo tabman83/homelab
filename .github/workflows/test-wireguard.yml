@@ -109,10 +109,10 @@ jobs:
 
           cat <<EOF >> ~/.ssh/config
           Host proxmox
-            HostName ${PROXMOX_SSH_HOST}
-            User ${PROXMOX_SSH_USER}
-            IdentityFile ~/.ssh/id_rsa
-            StrictHostKeyChecking no
+          HostName ${PROXMOX_SSH_HOST}
+          User ${PROXMOX_SSH_USER}
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
           EOF
 
       - name: Deploy all apps inside their LXCs
@@ -137,7 +137,7 @@ jobs:
 
             echo "[deploy] Deploying app '${APP_NAME}' to CT ${VMID} (dir: ${APP_DIR})..."
 
-            ssh proxmox "REPO_URL=${REPO_URL} APP_NAME=${APP_NAME} VMID=${VMID} APP_DIR=${APP_DIR} bash -s" << 'EOF'
+            ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@proxmox.local "REPO_URL=${REPO_URL} APP_NAME=${APP_NAME} VMID=${VMID} APP_DIR=${APP_DIR} bash -s" << 'EOF'
             set -euo pipefail
 
             # This runs on the Proxmox host
@@ -188,6 +188,7 @@ jobs:
             ./deploy.sh
 
             echo "[bootstrap:$APP_NAME] Done."
+            EOF
           done
 
       # Bring down the tunnel
