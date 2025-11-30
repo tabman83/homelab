@@ -97,11 +97,11 @@ jobs:
         run: terraform apply -auto-approve plan
 
       - name: Export deploy targets from Terraform
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         run: terraform output -json deploy_targets > deploy_targets.json
 
       - name: Set up SSH key for Proxmox
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.PROXMOX_SSH_KEY }}" > ~/.ssh/id_rsa
@@ -116,7 +116,7 @@ jobs:
           EOF
 
       - name: Deploy all apps inside their LXCs
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         run: |
           set -euo pipefail
 
