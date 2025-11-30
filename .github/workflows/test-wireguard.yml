@@ -32,11 +32,25 @@ jobs:
           sudo resolvectl dns wg0 192.168.5.1
           sudo resolvectl domain wg0 local
 
-      - name: Ensure all referenced LXC templates exist on Proxmox
-        env:
-          PROXMOX_SSH_KEY: ${{ secrets.PROXMOX_SSH_KEY }}
+      - name: Set up SSH key for Proxmox
+        if: github.ref == 'refs/heads/master'
         run: |
-          # 1) Find all ostemplate values in root .tf files (ignore modules/)
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROXMOX_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          cat <<EOF >> ~/.ssh/config
+          Host proxmox
+          HostName proxmox.local # ${PROXMOX_SSH_HOST}
+          User root # ${PROXMOX_SSH_USER}
+          IdentityFile ~/.ssh/id_rsa
+          StrictHostKeyChecking no
+          EOF
+
+      - name: Ensure all referenced LXC templates exist on Proxmox
+        if: github.ref == 'refs/heads/master'
+        run: |
+          # Find all ostemplate values in root .tf files (ignore modules/)
           templates=$(grep -hro 'ostemplate *= *"[^"]*"' . --exclude-dir=modules --include='*.tf' \
             | sed -E 's/.*"([^"]*)".*/\1/' \
             | sort -u)
@@ -49,16 +63,11 @@ jobs:
           echo "Found ostemplates:"
           echo "$templates"
 
-          # 2) Write SSH key
-          mkdir -p ~/.ssh
-          echo "$PROXMOX_SSH_KEY" > ~/.ssh/id_proxmox_ci
-          chmod 600 ~/.ssh/id_proxmox_ci
-
-          # 3) Run pveam update once
+          # Run pveam update once
           echo "Updating Proxmox template list (pveam update)..."
-          ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@proxmox.local "pveam update"
+          ssh proxmox "pveam update"
 
-          # 4) Loop over each template and ensure it exists
+          # Loop over each template and ensure it exists
           for tpl in $templates; do
             [ -z "$tpl" ] && continue
 
@@ -100,21 +109,6 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: terraform output -json deploy_targets > deploy_targets.json
 
-      - name: Set up SSH key for Proxmox
-        if: github.ref == 'refs/heads/master'
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.PROXMOX_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-          cat <<EOF >> ~/.ssh/config
-          Host proxmox
-          HostName ${PROXMOX_SSH_HOST}
-          User ${PROXMOX_SSH_USER}
-          IdentityFile ~/.ssh/id_rsa
-          StrictHostKeyChecking no
-          EOF
-
       - name: Deploy all apps inside their LXCs
         if: github.ref == 'refs/heads/master'
         run: |
@@ -137,7 +131,7 @@ jobs:
 
             echo "[deploy] Deploying app '${APP_NAME}' to CT ${VMID} (dir: ${APP_DIR})..."
 
-            ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@proxmox.local "REPO_URL=${REPO_URL} APP_NAME=${APP_NAME} VMID=${VMID} APP_DIR=${APP_DIR} bash -s" << 'EOF'
+            ssh proxmox "REPO_URL=${REPO_URL} APP_NAME=${APP_NAME} VMID=${VMID} APP_DIR=${APP_DIR} bash -s" << 'EOF'
             set -euo pipefail
 
             # This runs on the Proxmox host
