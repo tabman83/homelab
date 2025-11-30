@@ -182,6 +182,7 @@ jobs:
             ./deploy.sh
 
             echo "[bootstrap:$APP_NAME] Done."
+            INNER
             EOF
           done
 
