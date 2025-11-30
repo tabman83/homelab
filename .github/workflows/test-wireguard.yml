@@ -56,7 +56,7 @@ jobs:
 
           # 3) Run pveam update once
           echo "Updating Proxmox template list (pveam update)..."
-          ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@192.168.5.3 "pveam update"
+          ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@proxmox.local "pveam update"
 
           # 4) Loop over each template and ensure it exists
           for tpl in $templates; do
@@ -95,6 +95,100 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/master'
         run: terraform apply -auto-approve plan
+
+      - name: Export deploy targets from Terraform
+        if: github.ref == 'refs/heads/main'
+        run: terraform output -json deploy_targets > deploy_targets.json
+
+      - name: Set up SSH key for Proxmox
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROXMOX_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          cat <<EOF >> ~/.ssh/config
+          Host proxmox
+            HostName ${PROXMOX_SSH_HOST}
+            User ${PROXMOX_SSH_USER}
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Deploy all apps inside their LXCs
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+
+          # Build HTTPS clone URL for this repo
+          REPO_URL="https://github.com/tabman83.git"
+
+          echo "[deploy] Using repo: ${REPO_URL}"
+          echo "[deploy] Reading deploy_targets.json..."
+          cat deploy_targets.json
+
+          # Each line: app_name:vmid:app_dir
+          APPS=$(jq -r 'to_entries[] | "\(.key):\(.value.vmid):\(.value.app_dir)"' deploy_targets.json)
+
+          for entry in $APPS; do
+            APP_NAME=$(echo "$entry" | cut -d: -f1)
+            VMID=$(echo "$entry"     | cut -d: -f2)
+            APP_DIR=$(echo "$entry"  | cut -d: -f3)
+
+            echo "[deploy] Deploying app '${APP_NAME}' to CT ${VMID} (dir: ${APP_DIR})..."
+
+            ssh proxmox "REPO_URL=${REPO_URL} APP_NAME=${APP_NAME} VMID=${VMID} APP_DIR=${APP_DIR} bash -s" << 'EOF'
+            set -euo pipefail
+
+            # This runs on the Proxmox host
+            # Then we exec into the container
+
+            pct exec "$VMID" -- env REPO_URL="$REPO_URL" APP_NAME="$APP_NAME" APP_DIR="$APP_DIR" bash -s << 'INNER'
+            set -euo pipefail
+
+            REPO_DIR="/opt/homelab/homelab"
+            APP_PATH="${REPO_DIR}/${APP_DIR}"
+
+            echo "[bootstrap:$APP_NAME] Installing prerequisites if needed..."
+
+            if ! command -v git >/dev/null 2>&1; then
+              apt-get update
+              apt-get install -y ca-certificates curl gnupg git
+            fi
+
+            if ! command -v docker >/dev/null 2>&1; then
+              install -m 0755 -d /etc/apt/keyrings || true
+              if [ ! -f /etc/apt/keyrings/docker.gpg ]; then
+                curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+                chmod a+r /etc/apt/keyrings/docker.gpg
+              fi
+
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+
+              apt-get update
+              apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+            fi
+
+            echo "[bootstrap:$APP_NAME] Cloning or updating repo at $REPO_DIR..."
+
+            mkdir -p "$(dirname "$REPO_DIR")"
+
+            if [ ! -d "$REPO_DIR/.git" ]; then
+              rm -rf "$REPO_DIR"
+              git clone "$REPO_URL" "$REPO_DIR"
+            else
+              cd "$REPO_DIR"
+              git pull --rebase
+            fi
+
+            cd "$APP_PATH"
+            chmod +x deploy.sh || true
+
+            echo "[bootstrap:$APP_NAME] Running deploy.sh in $APP_PATH..."
+            ./deploy.sh
+
+            echo "[bootstrap:$APP_NAME] Done."
+          done
 
       # Bring down the tunnel
       - name: Bring down WireGuard
