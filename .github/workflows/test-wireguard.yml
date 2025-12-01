@@ -181,9 +181,7 @@ jobs:
                 echo "[bootstrap:$APP_NAME] Running deploy.sh in $APP_PATH..."
                 ./deploy.sh
 
-                echo "[bootstrap:$APP_NAME] Done."
-                INNER
-                EOF
+                echo "[bootstrap:$APP_NAME] Done."INNEREOF
           done
 
       # Bring down the tunnel
