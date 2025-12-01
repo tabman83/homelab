@@ -5,7 +5,7 @@ module "homer_lxc" {
   vmid            = 110
   target_node     = "pve"
   ostemplate      = "local:vztmpl/debian-13-standard_13.1-2_amd64.tar.zst"
-  unprivileged    = true
+  unprivileged    = false
   onboot          = true
   cores           = 1
   memory          = 1024
