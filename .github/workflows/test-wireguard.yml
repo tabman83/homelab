@@ -155,8 +155,9 @@ jobs:
             echo "[controller:$APP_NAME] CT $VMID currently lives on node '$NODE'"
 
             HOSTNAME=$(hostname)
+            HOST_SHORT=$(hostname -s)
 
-            if [ "$NODE" = "$HOSTNAME" ]; then
+            if [ "$NODE" = "$HOSTNAME" ] || [ "$NODE" = "$HOST_SHORT" ]; then
               echo "[controller:$APP_NAME] Running on local node '$HOSTNAME' with pct exec"
               # We are on the right node – run pct exec locally
               pct exec "$VMID" -- env REPO_URL="$REPO_URL" APP_NAME="$APP_NAME" APP_DIR="$APP_DIR" bash -s << 'INNER'
