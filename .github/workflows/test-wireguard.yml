@@ -121,7 +121,7 @@ jobs:
           set -euo pipefail
 
           # Build HTTPS clone URL for this repo
-          REPO_URL="https://github.com/tabman83.git"
+          REPO_URL="https://github.com/tabman83/homelab.git"
 
           echo "[deploy] Using repo: ${REPO_URL}"
           echo "[deploy] Reading deploy_targets.json..."
