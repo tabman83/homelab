@@ -168,7 +168,8 @@ jobs:
               pct exec "$VMID" -- env REPO_URL="$REPO_URL" APP_NAME="$APP_NAME" APP_DIR="$APP_DIR" bash -s << 'INNER'
               set -euo pipefail
 
-              REPO_DIR="/opt/homelab/homelab"
+              REPO_ROOT="/opt/homelab"
+              REPO_DIR="${REPO_ROOT}/${APP_NAME}"
               APP_PATH="${REPO_DIR}/${APP_DIR}"
 
               echo "[bootstrap:$APP_NAME] Installing prerequisites if needed..."
