@@ -81,7 +81,7 @@ jobs:
             echo "  path    = $path"
             echo "  file    = $filename"
 
-            ssh -i ~/.ssh/id_proxmox_ci -o StrictHostKeyChecking=no root@proxmox.local "
+            ssh proxmox "
               set -e
               if ! pveam list $storage | awk '{print \$1}' | grep -qx '$tpl'; then
                 echo '  -> Missing, downloading via: pveam download $storage $filename'
