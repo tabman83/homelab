@@ -38,13 +38,19 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.PROXMOX_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
+          rm -f ~/.ssh/known_hosts
           cat <<EOF >> ~/.ssh/config
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+
           Host proxmox
-          HostName proxmox.local # ${PROXMOX_SSH_HOST}
-          User root # ${PROXMOX_SSH_USER}
-          IdentityFile ~/.ssh/id_rsa
-          StrictHostKeyChecking no
+            HostName pve.local
+            HostName pve2.local
+            HostName pve3.local
+            HostName proxmox.local
+            User root
+            IdentityFile ~/.ssh/id_rsa
           EOF
 
       - name: Ensure all referenced LXC templates exist on Proxmox
