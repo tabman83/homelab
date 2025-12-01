@@ -10,7 +10,7 @@ module "homer_lxc" {
   cores           = 1
   memory          = 1024
   rootfs_storage  = "ceph-rbd-homelab"
-  rootfs_size     = "1"
+  rootfs_size     = "5"
   ip_address      = "192.168.5.51/24"
   gateway         = "192.168.5.1"
   network_bridge  = "vmbr0"
