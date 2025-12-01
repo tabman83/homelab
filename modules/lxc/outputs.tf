@@ -1,4 +1,9 @@
 output "vmid" {
-  description = "LXC Container ID"
+  description = "LXC ID"
   value       = var.vmid
+}
+
+output "hostname" {
+  description = "Container hostname"
+  value       = var.hostname
 }
