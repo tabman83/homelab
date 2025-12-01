@@ -3,7 +3,7 @@ output "deploy_targets" {
   value = {
     homer = {
       vmid    = module.homer_lxc.vmid
-      app_dir = "homer"
+      app_dir = "services/${module.homer_lxc.hostname}"
     }
 
     # later you'll add more, e.g.:
