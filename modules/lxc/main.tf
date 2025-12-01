@@ -67,8 +67,14 @@ resource "proxmox_virtual_environment_container" "this" {
     prevent_destroy = true
   }
 
-  features {
-    nesting = var.enable_docker
+  # Only set features (nesting/fuse) when the container is unprivileged.
+  # Proxmox only allows changing feature flags on privileged containers with root@pam.
+  dynamic "features" {
+    for_each = var.enable_docker && var.unprivileged ? [1] : []
+    content {
+      nesting = true
+      fuse    = true
+    }
   }
 }
 
