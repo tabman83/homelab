@@ -183,7 +183,7 @@ jobs:
 
                 echo "[bootstrap:$APP_NAME] Done."
                 INNER
-              EOF
+                EOF
           done
 
       # Bring down the tunnel
